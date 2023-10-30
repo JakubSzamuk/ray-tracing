@@ -1,4 +1,3 @@
-// Purpose: Image settings
 
 pub const ASPECT_RATIO: f64 = 16.0 / 9.0;
 pub const IMAGE_WIDTH: u64 = 192;

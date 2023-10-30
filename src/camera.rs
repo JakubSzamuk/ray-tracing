@@ -1,3 +1,5 @@
+use crate::image::VIEWPORT_HEIGHT;
+
 use super::vectors::{Vec3, Point3, Color};
 use super::ray::Ray;
 use super::world::World;
@@ -17,7 +19,7 @@ pub struct Camera {
   focal_length: f64,
 
 
-  lower_left_corner: Point3,
+  starting_corner: Point3,
   horizontal: Vec3,
   vertical: Vec3,
 }
@@ -48,14 +50,14 @@ fn ray_color(r: &Ray, recurse_count: u16, objects: &Vec<Sphere>) -> Color {
   let mut closest_distance: f64 = -1.0;
 
   for i in 0..objects.len() {
-      if objects[i].intersects_ray(r) {
-          let distance = objects[i].intersects_ray_at(r);
+    if objects[i].intersects_ray(r) {
+      let distance = objects[i].intersects_ray_at(r);
 
-          if distance < closest_distance || closest_distance == -1.0 {
-              closest_object = &objects[i];
-              closest_distance = distance;
-          }
+      if distance < closest_distance || closest_distance == -1.0 {
+          closest_object = &objects[i];
+          closest_distance = distance;
       }
+    }
   }
 
   if closest_distance != -1.0 {
@@ -71,8 +73,8 @@ fn ray_color(r: &Ray, recurse_count: u16, objects: &Vec<Sphere>) -> Color {
 
 impl Camera {
   pub fn new(origin: &Point3, aspect_ratio: &f64, viewport_width: u64, focal_length: &f64) -> Camera {
-    let horizontal = Vec3::new(viewport_width as f64, 0.0, 0.0);
-    let vertical = Vec3::new(0.0, viewport_width as f64 / aspect_ratio, 0.0);
+    let horizontal = Vec3::new(aspect_ratio * 1.0 as f64, 0.0, 0.0);
+    let vertical = Vec3::new(0.0, 1.0,0.0);
     
     Camera {
       origin: *origin,
@@ -81,7 +83,7 @@ impl Camera {
       viewport_width: viewport_width,
       focal_length: *focal_length,
 
-      lower_left_corner: origin - &(horizontal / 2.0) - vertical / 2.0 - Vec3::new(0.0, 0.0, *focal_length),
+      starting_corner: origin - &(horizontal / 2.0) + vertical / 2.0 - Vec3::new(0.0, 0.0, *focal_length),
       horizontal: horizontal,
       vertical: vertical,
     }
@@ -93,12 +95,13 @@ impl Camera {
 
     image_writer.write(format!("P3\n{} {}\n255\n", self.viewport_width, self.viewport_height).as_bytes()).expect("Uh oh");
 
-    const SAMPLE_SIZE: u16 = 512;
+    const SAMPLE_SIZE: u16 = 1024;
     const MAX_BOUNCES: u16 = 4;
+
 
     let mut rng = rand::thread_rng();
 
-    for j in (0..self.viewport_height).rev() {
+    for j in (0..self.viewport_height) {
         let v = (j as f64) / ((self.viewport_height - 1) as f64);
 
         for i in 0..self.viewport_width {
@@ -112,7 +115,7 @@ impl Camera {
                 let rand_v: f64 = rng.gen();
 
 
-                let r = Ray::new(self.origin, self.lower_left_corner + (u + (rand_u / ((self.viewport_width - 1) as f64))) * self.horizontal + (v + (rand_v / ((self.viewport_height - 1) as f64))) * self.vertical - self.origin);
+                let r = Ray::new(self.origin, self.starting_corner + (u + (rand_u / ((self.viewport_width - 1) as f64))) * self.horizontal - (v + (rand_v / ((self.viewport_height - 1) as f64))) * self.vertical - self.origin);
                 let sample_pixel_color = ray_color(&r, MAX_BOUNCES, world.list_objects());
 
                 pixel_color_sum += sample_pixel_color;
