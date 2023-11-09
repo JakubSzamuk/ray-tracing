@@ -38,13 +38,6 @@ fn ray_color(r: &Ray, recurse_count: u16, objects: &Vec<Sphere>) -> Color {
   let t: f64 = 0.5 * (unit_direction.y() + 1.0);
   
 
-  // let SPHERES: [Sphere; 4] = [
-  //     Sphere::new(Point3::new(-0.50,0.5,-1.0),0.3, [0.7, 0.2, 0.3], 0.0),
-  //     Sphere::new(Point3::new(0.5,0.0,-2.0),0.6, [0.3, 0.1, 0.6], 0.0),
-  //     Sphere::new(Point3::new(1.5,-1.0,-1.8),0.8, [0.1, 0.8, 0.5], 0.0),
-  //     Sphere::new(Point3::new(-0.5,-0.8,-1.5),0.5, [1.0, 1.0, 1.0], 20.0)
-  // ];
-
 
   let mut closest_object: &Sphere = &objects[0];
   let mut closest_distance: f64 = -1.0;
@@ -61,11 +54,11 @@ fn ray_color(r: &Ray, recurse_count: u16, objects: &Vec<Sphere>) -> Color {
   }
 
   if closest_distance != -1.0 {
-      let diffuse_ray = Ray::new_random(r.at(closest_distance), &closest_object);
-      let traced_color = ray_color(&diffuse_ray, recurse_count - 1, objects);
+      let new_ray = closest_object.material().trace_color(&r, closest_object, closest_distance);
+      let traced_color = ray_color(&new_ray, recurse_count - 1, objects);
 
 
-      return (closest_object.color() * (closest_object.emission() + 1 as f64)) * traced_color
+      return closest_object.material().return_color(&traced_color, &closest_object)
   }
 
   (1.0 - t) * Color::new(1.0, 1.0, 1.0) + t * Color::new(0.5, 0.7, 1.0)
@@ -107,7 +100,6 @@ impl Camera {
         for i in 0..self.viewport_width {
             let u = (i as f64) / ((self.viewport_width - 1) as f64);
 
-            // TODO: Multi-sampling
             let mut pixel_color_sum = Color::new(0.0, 0.0, 0.0);
 
             for _ in 0..(SAMPLE_SIZE - 1) {

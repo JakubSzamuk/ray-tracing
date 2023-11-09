@@ -1,20 +1,23 @@
+use crate::vectors::Vec3;
+
 use super::vectors::{Point3, Color};
 use super::ray::Ray;
+use super::material::Hit;
 
 pub struct Sphere {
   center: Point3,
   radius: f64,
-  color: Color,
   emission: f64,
+  material: Box<dyn Hit>
 }
 
 impl Sphere {
-  pub fn new(origin: Point3, radius: f64, color: [f64; 3], e_strength: f64) -> Sphere {
+  pub fn new(origin: Point3, radius: f64, e_strength: f64, material: Box<dyn Hit>) -> Sphere {
     Sphere {
       center: origin,
       radius: radius,
-      color: Color::new(color[0], color[1], color[2]),
       emission: e_strength,
+      material
     }
   }
 
@@ -26,8 +29,8 @@ impl Sphere {
     self.radius
   }
 
-  pub fn color(&self) -> Color {
-    self.color
+  pub fn material(&self) -> &Box<dyn Hit> {
+    &self.material
   }
 
   pub fn emission(&self) -> f64 {
@@ -52,5 +55,9 @@ impl Sphere {
     let t = self.intersects_ray_at(ray);
 
     t > 0.0
+  }
+
+  pub fn normal_vector(&self, at: Point3) -> Vec3 {
+    (at - self.center()).normalized()
   }
 }

@@ -58,9 +58,9 @@ impl Vec3 {
 impl Color {
   pub fn format_color(self) -> String {
     format!("{} {} {}", 
-                        (255.999 * self[0]) as u64,          
-                        (255.999 * self[1]) as u64,          
-                        (255.999 * self[2]) as u64,                    
+                        f64::min(255.999 * self[0], 255.0) as u64,          
+                        f64::min(255.999 * self[1], 255.0) as u64,          
+                        f64::min(255.999 * self[2], 255.0) as u64,                    
     )
   }
 }
